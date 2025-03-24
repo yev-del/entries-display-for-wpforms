@@ -1,0 +1,142 @@
+/* Admin styles for WPForms Entries Display */
+.wpfed-admin-wrap {
+    margin: 20px 0;
+}
+
+.wpfed-admin-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.wpfed-admin-main {
+    flex: 1;
+    min-width: 500px;
+    margin-right: 20px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.wpfed-admin-sidebar {
+    width: 350px;
+    margin-bottom: 20px;
+}
+
+.wpfed-shortcode-generator,
+.wpfed-help-box {
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.wpfed-shortcode-generator h2,
+.wpfed-help-box h3 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.wpfed-shortcode-option {
+    margin-bottom: 15px;
+}
+
+.wpfed-shortcode-option label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.wpfed-shortcode-option select,
+.wpfed-shortcode-option input[type="text"],
+.wpfed-shortcode-option input[type="number"] {
+    width: 100%;
+}
+
+.wpfed-shortcode-option .description {
+    margin-top: 5px;
+    color: #666;
+    font-style: italic;
+}
+
+.wpfed-shortcode-preview {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.wpfed-shortcode-result {
+    display: flex;
+    align-items: center;
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.wpfed-shortcode-result code {
+    flex: 1;
+    padding: 5px;
+    background: transparent;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+#wpfed_copy_shortcode {
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+}
+
+#wpfed_copy_shortcode .dashicons {
+    margin-right: 5px;
+}
+
+.wpfed-help-box p {
+    margin-bottom: 15px;
+}
+
+/* Form field checkboxes */
+#wpfed_display_fields_container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background: #f9f9f9;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+#wpfed_display_fields_container label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+#wpfed_display_fields_container label:last-child {
+    margin-bottom: 0;
+}
+
+/* Color picker adjustments */
+.wp-picker-container {
+    display: inline-block;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 782px) {
+    .wpfed-admin-container {
+        flex-direction: column;
+    }
+    
+    .wpfed-admin-main {
+        margin-right: 0;
+        margin-bottom: 20px;
+        min-width: auto;
+    }
+    
+    .wpfed-admin-sidebar {
+        width: 100%;
+    }
+}

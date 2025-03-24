@@ -1,0 +1,64 @@
+/* Base styles for WPForms Entries Display */
+.wpfed-wrapper {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+/* Base styles for WPForms Entries Display */
+.wpfed-comments-container {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.wpfed-comment {
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.wpfed-comment:last-child {
+    margin-bottom: 0;
+}
+
+.wpfed-comment-date {
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.wpfed-comment-content {
+    overflow: hidden;
+}
+
+.wpfed-comment-field {
+    margin-bottom: 8px;
+}
+
+.wpfed-comment-field:last-child {
+    margin-bottom: 0;
+}
+
+.wpfed-field-label {
+    font-weight: bold;
+}
+
+.wpfed-field-value {
+    word-break: break-word;
+}
+
+.wpfed-error,
+.wpfed-no-entries {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.wpfed-error {
+    color: #d63638;
+    background-color: #ffecec;
+    border: 1px solid #ffb8b8;
+}
+
+/* Additional styles will be added inline via PHP */
