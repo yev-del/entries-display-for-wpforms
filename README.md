@@ -84,14 +84,14 @@ Absolutely! The plugin offers extensive styling options including colors, border
 == Changelog ==
 
 = 0.1 =
+
 * Initial release
+
 
 == Upgrade Notice ==
 
-= 0.1a =
-Initial release of WPForms Entries Display
-
 = 0.2 =
+
 Fix WordPress.org plugin review issues and improve admin UI
 
 - Fixed JS/CSS enqueuing using wp_enqueue_script() and wp_localize_script() instead of inline scripts
