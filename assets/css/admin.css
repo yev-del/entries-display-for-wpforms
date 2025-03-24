@@ -3,6 +3,11 @@
     margin: 20px 0;
 }
 
+.wpfed-admin-wrap h1 {
+    margin-left: 10px;
+    padding: 10px 0;
+}
+
 .wpfed-admin-container {
     display: flex;
     flex-wrap: wrap;
@@ -50,10 +55,18 @@
     font-weight: 600;
 }
 
+/* Reduce width of input fields in sidebar */
 .wpfed-shortcode-option select,
 .wpfed-shortcode-option input[type="text"],
 .wpfed-shortcode-option input[type="number"] {
     width: 100%;
+    max-width: 260px; /* Limit maximum width */
+}
+
+/* Special styles for Show Entry Date and Date Format fields */
+#wpfed_sc_show_date,
+#wpfed_sc_date_format {
+    width: 80%; /* Reduce to 80% of available width */
 }
 
 .wpfed-shortcode-option .description {
@@ -124,6 +137,28 @@
     display: inline-block;
 }
 
+/* Custom date format styles - moved outside of media query */
+.wpfed-custom-date-format {
+    margin-top: 15px;
+    max-width: 300px;
+}
+
+.wpfed-custom-date-format label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.wpfed-custom-date-format input {
+    display: block;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.wpfed-custom-date-format button {
+    display: block;
+    width: auto;
+}
+
 /* Responsive adjustments */
 @media screen and (max-width: 782px) {
     .wpfed-admin-container {
@@ -138,5 +173,11 @@
     
     .wpfed-admin-sidebar {
         width: 100%;
+    }
+    
+    .wpfed-shortcode-option select,
+    .wpfed-shortcode-option input[type="text"],
+    .wpfed-shortcode-option input[type="number"] {
+        max-width: 100%; /* Use full width on mobile devices */
     }
 }

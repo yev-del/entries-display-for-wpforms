@@ -26,7 +26,7 @@ class WPFED_Admin_Settings {
         add_submenu_page(
             'options-general.php',
             esc_html__('Entries Display for WPForms', 'entries-display-for-wpforms'),
-            esc_html__('WPForms Entries', 'entries-display-for-wpforms'),
+            esc_html__('Entries Display for WPForms', 'entries-display-for-wpforms'),
             'manage_options',
             'entries-display-for-wpforms',
             array($this, 'display_settings_page')
@@ -289,12 +289,12 @@ class WPFED_Admin_Settings {
         $show_date = isset($options['show_date']) ? $options['show_date'] : 'yes';
         
         echo '<select name="wpfed_options[show_date]" id="wpfed_show_date" class="regular-text">';
+        echo '<option value="yes" ' . selected($show_date, 'yes', false) . '>' . esc_html__('Yes', 'entries-display-for-wpforms') . '</option>';
         echo '<option value="no" ' . selected($show_date, 'no', false) . '>' . esc_html__('No', 'entries-display-for-wpforms') . '</option>';
-        echo '<p class="description">' . esc_html__('Show the date when the entry was submitted.', 'entries-display-for-wpforms') . '</p>';
         echo '</select>';
         echo '<p class="description">' . esc_html__('Show the date when the entry was submitted.', 'entries-display-for-wpforms') . '</p>';
     }
-
+    
     /**
      * Date format setting callback
      */
@@ -319,11 +319,10 @@ class WPFED_Admin_Settings {
         echo '</select>';
         echo '<p class="description">' . esc_html__('Select the format for displaying the entry date.', 'entries-display-for-wpforms') . '</p>';
         
-//        echo '<div class="wpfed-custom-date-format" style="margin-top: 10px;">';
-//        echo '<p class="description">' . esc_html__('Select the format for displaying the entry date.', 'entries-display-for-wpforms') . '</p>';
-//      echo '<input type="text" id="wpfed_custom_date_format" class="regular-text" placeholder="Y-m-d H:i:s">';
-//    echo '<label for="wpfed_custom_date_format">' . esc_html__('Custom Format:', 'entries-display-for-wpforms') . '</label>';
-//  echo '<button type="button" id="wpfed_apply_custom_date" class="button button-secondary">' . esc_html__('Apply Custom Format', 'entries-display-for-wpforms') . '</button>';
+        echo '<div class="wpfed-custom-date-format">';
+        echo '<label for="wpfed_custom_date_format">' . esc_html__('Custom Format:', 'entries-display-for-wpforms') . '</label>';
+        echo '<input type="text" id="wpfed_custom_date_format" class="regular-text" placeholder="Y-m-d H:i:s">';
+        echo '<button type="button" id="wpfed_apply_custom_date" class="button button-secondary">' . esc_html__('Apply Custom Format', 'entries-display-for-wpforms') . '</button>';
         echo '</div>';
     }
 
@@ -372,43 +371,34 @@ class WPFED_Admin_Settings {
         echo '</select>';
         echo '<p class="description">' . esc_html__('Select the default WPForms form to display entries from.', 'entries-display-for-wpforms') . '</p>';
         
-        // AJAX script to load fields when a form is selected
-        echo '<script type="text/javascript">
-            jQuery(document).ready(function($) {
-                $("#wpfed_form_id").on("change", function() {
-                    var formId = $(this).val();
-                    if (formId) {
-                        $.ajax({
-                            url: ajaxurl,
-                            type: "POST",
-                            data: {
-                                action: "wpfed_get_form_fields",
-                                form_id: formId,
-                                nonce: "' . esc_attr(wp_create_nonce('wpfed_get_fields_nonce')) . '"
-                            },
-                            success: function(response) {
-                                $("#wpfed_display_fields_container").html(response);
-                                // Update shortcode generator
-                                updateShortcodePreview();
-                            }
-                        });
-                    } else {
-                        $("#wpfed_display_fields_container").html("<p>' . esc_js(__('Please select a form first.', 'entries-display-for-wpforms')) . '</p>");
-                        // Update shortcode generator
-                        updateShortcodePreview();
-                    }
-                });
-            });
-        </script>';
-    }
-    
-    /**
-     * Callback for default fields selection
-     */
-    public function display_fields_callback() {
-        $options = get_option('wpfed_options');
-        $form_id = isset($options['form_id']) ? $options['form_id'] : '';
-        $display_fields = isset($options['display_fields']) ? $options['display_fields'] : array();
+        // Properly enqueue script using WordPress API
+        wp_enqueue_script(
+            'wpfed-admin-settings',
+            WPFED_PLUGIN_URL . 'assets/js/admin-settings.js',
+            array('jquery'),
+            WPFED_VERSION,
+            true
+        );
+        
+        // Pass variables to JavaScript
+        wp_localize_script(
+            'wpfed-admin-settings',
+            'wpfed_admin_vars',
+            array(
+                'ajaxurl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('wpfed_get_fields_nonce'),
+                'select_form_text' => esc_js(__('Please select a form first.', 'entries-display-for-wpforms'))
+            )
+        );
+        } // <-- Эта закрывающая скобка отсутствовала!
+        
+        /**
+         * Callback for default fields selection
+         */
+        public function display_fields_callback() {
+            $options = get_option('wpfed_options');
+            $form_id = isset($options['form_id']) ? $options['form_id'] : '';
+            $display_fields = isset($options['display_fields']) ? $options['display_fields'] : array();
         
         echo '<div id="wpfed_display_fields_container">';
         
@@ -504,8 +494,12 @@ class WPFED_Admin_Settings {
         $options = get_option('wpfed_options');
         $border_radius = isset($options['styles']['border_radius']) ? $options['styles']['border_radius'] : '5px';
         
-        echo '<input type="text" name="wpfed_options[styles][border_radius]" id="wpfed_border_radius" value="' . esc_attr($border_radius) . '" class="regular-text">';
-        echo '<p class="description">' . esc_html__('Enter a value with units (e.g., 5px, 0.5em).', 'entries-display-for-wpforms') . '</p>';
+        echo '<select name="wpfed_options[styles][border_radius]" id="wpfed_border_radius" class="regular-text">';
+        for ($i = 0; $i <= 50; $i += 5) {
+            echo '<option value="' . esc_attr($i . 'px') . '" ' . selected($border_radius, $i . 'px', false) . '>' . esc_html($i . 'px') . '</option>';
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Select the border radius for comment boxes.', 'entries-display-for-wpforms') . '</p>';
     }
     
     /**
@@ -515,8 +509,12 @@ class WPFED_Admin_Settings {
         $options = get_option('wpfed_options');
         $padding = isset($options['styles']['padding']) ? $options['styles']['padding'] : '15px';
         
-        echo '<input type="text" name="wpfed_options[styles][padding]" id="wpfed_padding" value="' . esc_attr($padding) . '" class="regular-text">';
-        echo '<p class="description">' . esc_html__('Enter a value with units (e.g., 15px, 1em).', 'entries-display-for-wpforms') . '</p>';
+        echo '<select name="wpfed_options[styles][padding]" id="wpfed_padding" class="regular-text">';
+        for ($i = 5; $i <= 50; $i += 5) {
+            echo '<option value="' . esc_attr($i . 'px') . '" ' . selected($padding, $i . 'px', false) . '>' . esc_html($i . 'px') . '</option>';
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Select the padding for comment boxes.', 'entries-display-for-wpforms') . '</p>';
     }
     
     /**

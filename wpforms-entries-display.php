@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Entries Display for WPForms
  * Description: Display WPForms entries as styled comments with customizable options.
- * Version: 0.1
+ * Version: 0.2
  * Author: YD:dev
  * Author URI: https://deliamure.com/
  * Text Domain: entries-display-for-wpforms
@@ -24,13 +24,13 @@ global $wp_filesystem;
 // Define plugin constants for directory paths and version control.
 define('WPFED_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WPFED_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('WPFED_VERSION', '1.0.0');
+define('WPFED_VERSION', '0.2');
 
 // Include necessary files for plugin functionality.
 require_once WPFED_PLUGIN_DIR . 'includes/admin-settings.php';
 require_once WPFED_PLUGIN_DIR . 'includes/shortcode.php';
 
-// Initialize the plugin by registering styles and setting up text domain for translations.
+// Initialize the plugin by registering styles.
 function wpfed_init() {
     // Register frontend styles for the plugin.
     wp_register_style(
@@ -40,8 +40,8 @@ function wpfed_init() {
         WPFED_VERSION
     );
     
-    // Load plugin text domain for localization support.
-    load_plugin_textdomain('entries-display-for-wpforms', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    // Translations are automatically loaded by WordPress for plugins on WordPress.org
+    // No need to call load_plugin_textdomain() since WordPress 4.6
 }
 add_action('init', 'wpfed_init');
 

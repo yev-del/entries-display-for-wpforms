@@ -90,3 +90,14 @@ Absolutely! The plugin offers extensive styling options including colors, border
 
 = 0.1a =
 Initial release of WPForms Entries Display
+
+= 0.2 =
+Fix WordPress.org plugin review issues and improve admin UI
+
+- Fixed JS/CSS enqueuing using wp_enqueue_script() and wp_localize_script() instead of inline scripts
+- Removed deprecated load_plugin_textdomain() call as it's no longer needed for WordPress.org plugins
+- Fixed date format selector UI issues with duplicated text and missing options
+- Improved admin UI layout with better spacing and alignment
+- Added proper display for custom date format input and button
+- Fixed responsive design issues in the admin settings page
+- Updated CSS with better organization and comments
