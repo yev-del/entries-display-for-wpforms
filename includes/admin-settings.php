@@ -560,152 +560,313 @@ class WPFED_Admin_Settings {
     }
     
     /**
-     * Display the main settings page in the admin area
-     */
-    public function display_settings_page() {
-        ?>
-        <div class="wrap wpfed-admin-wrap">
-            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+ * Display the main settings page in the admin area
+ */
+public function display_settings_page() {
+    ?>
+    <div class="wrap wpfed-admin-wrap">
+        <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+        
+        <div class="wpfed-admin-container">
+            <div class="wpfed-admin-main">
+                <form method="post" action="options.php">
+                    <?php settings_fields('wpfed_options_group'); ?>
+                    
+                    <!-- General Settings Section -->
+                    <div class="wpfed-settings-section">
+                        <h2><?php esc_html_e('General Settings', 'entries-display-for-wpforms'); ?></h2>
+                        <div class="wpfed-settings-section-content">
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Default Form', 'entries-display-for-wpforms'); ?></th>
+                                    <td><?php $this->form_id_callback(); ?></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Default Fields to Display', 'entries-display-for-wpforms'); ?></th>
+                                    <td><?php $this->display_fields_callback(); ?></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Default Entries Per Page', 'entries-display-for-wpforms'); ?></th>
+                                    <td><?php $this->entries_per_page_callback(); ?></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Display Settings Section -->
+                    <div class="wpfed-settings-section">
+                        <h2><?php esc_html_e('Display Settings', 'entries-display-for-wpforms'); ?></h2>
+                        <div class="wpfed-settings-section-content">
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Show Entry Date', 'entries-display-for-wpforms'); ?></th>
+                                    <td><?php $this->show_date_callback(); ?></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Date Format', 'entries-display-for-wpforms'); ?></th>
+                                    <td><?php $this->date_format_callback(); ?></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Show Username', 'entries-display-for-wpforms'); ?></th>
+                                    <td><?php $this->show_username_callback(); ?></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Hide Field Labels', 'entries-display-for-wpforms'); ?></th>
+                                    <td><?php $this->hide_field_labels_callback(); ?></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Hide Empty Fields', 'entries-display-for-wpforms'); ?></th>
+                                    <td><?php $this->hide_empty_fields_callback(); ?></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Style Settings Section -->
+                    <div class="wpfed-settings-section">
+                        <h2><?php esc_html_e('Style Settings', 'entries-display-for-wpforms'); ?></h2>
+                        <div class="wpfed-settings-section-content">
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Colors', 'entries-display-for-wpforms'); ?></th>
+                                    <td>
+                                        <div class="wpfed-colors-grid">
+                                            <div class="wpfed-color-option">
+                                                <label for="wpfed_background_color"><?php esc_html_e('Background', 'entries-display-for-wpforms'); ?></label>
+                                                <?php $this->background_color_callback(); ?>
+                                            </div>
+                                            
+                                            <div class="wpfed-color-option">
+                                                <label for="wpfed_border_color"><?php esc_html_e('Border', 'entries-display-for-wpforms'); ?></label>
+                                                <?php $this->border_color_callback(); ?>
+                                            </div>
+                                            
+                                            <div class="wpfed-color-option">
+                                                <label for="wpfed_text_color"><?php esc_html_e('Text', 'entries-display-for-wpforms'); ?></label>
+                                                <?php $this->text_color_callback(); ?>
+                                            </div>
+                                            
+                                            <div class="wpfed-color-option">
+                                                <label for="wpfed_header_color"><?php esc_html_e('Header', 'entries-display-for-wpforms'); ?></label>
+                                                <?php $this->header_color_callback(); ?>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Dimensions', 'entries-display-for-wpforms'); ?></th>
+                                    <td>
+                                        <div class="wpfed-dimensions-grid">
+                                            <div class="wpfed-dimension-option">
+                                                <label for="wpfed_border_radius"><?php esc_html_e('Border Radius', 'entries-display-for-wpforms'); ?></label>
+                                                <?php $this->border_radius_callback(); ?>
+                                            </div>                                            
+                                            <div class="wpfed-dimension-option">
+                                                <label for="wpfed_padding"><?php esc_html_e('Padding', 'entries-display-for-wpforms'); ?></label>
+                                                <?php $this->padding_callback(); ?>
+                                                
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Effects', 'entries-display-for-wpforms'); ?></th>
+                                    <td>
+                                        <div class="wpfed-effect-option">
+                                            <label for="wpfed_box_shadow"><?php esc_html_e('Box Shadow', 'entries-display-for-wpforms'); ?></label>
+                                            <?php $this->box_shadow_callback(); ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Preview Section -->
+                    <div class="wpfed-settings-section wpfed-preview-section">
+                        <h2><?php esc_html_e('Live Preview', 'entries-display-for-wpforms'); ?></h2>
+                        <div class="wpfed-settings-section-content">
+                            <div class="wpfed-live-preview">
+                                <div class="wpfed-preview-entry">
+                                    <div class="wpfed-preview-entry-header">
+                                        <?php esc_html_e('Entry from', 'entries-display-for-wpforms'); ?> 
+                                        <span class="wpfed-preview-date"><?php echo date_i18n('F j, Y g:i a'); ?></span>
+                                        <?php esc_html_e('by', 'entries-display-for-wpforms'); ?> 
+                                        <span class="wpfed-preview-user"><?php esc_html_e('John Doe', 'entries-display-for-wpforms'); ?></span>
+                                    </div>
+                                    
+                                    <div class="wpfed-preview-field">
+                                        <span class="wpfed-preview-label"><?php esc_html_e('Name:', 'entries-display-for-wpforms'); ?></span>
+                                        <span class="wpfed-preview-value"><?php esc_html_e('John Doe', 'entries-display-for-wpforms'); ?></span>
+                                    </div>
+                                    
+                                    <div class="wpfed-preview-field">
+                                        <span class="wpfed-preview-label"><?php esc_html_e('Email:', 'entries-display-for-wpforms'); ?></span>
+                                        <span class="wpfed-preview-value"><?php esc_html_e('john.doe@example.com', 'entries-display-for-wpforms'); ?></span>
+                                    </div>
+                                    
+                                    <div class="wpfed-preview-field">
+                                        <span class="wpfed-preview-label"><?php esc_html_e('Message:', 'entries-display-for-wpforms'); ?></span>
+                                        <span class="wpfed-preview-value"><?php esc_html_e('This is a sample message that would appear in your entries display.', 'entries-display-for-wpforms'); ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="description"><?php esc_html_e('This is a preview of how your entries will appear on your site based on the current style settings.', 'entries-display-for-wpforms'); ?></p>
+                        </div>
+                    </div>
+                    
+                    <?php submit_button(); ?>
+                </form>
+            </div>
             
-            <div class="wpfed-admin-container">
-                <div class="wpfed-admin-main">
-                    <form method="post" action="options.php">
-                        <?php
-                        settings_fields('wpfed_options_group');
-                        do_settings_sections('wpfed_settings');
-                        submit_button();
-                        ?>
-                    </form>
+            <div class="wpfed-admin-sidebar">
+                <!-- Shortcode Generator -->
+                <div class="wpfed-shortcode-generator">
+                    <h2><?php esc_html_e('Shortcode Generator', 'entries-display-for-wpforms'); ?></h2>
+                    
+                    <div class="wpfed-shortcode-builder">
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_form_id"><?php esc_html_e('Form:', 'entries-display-for-wpforms'); ?></label>
+                            <select id="wpfed_sc_form_id" class="wpfed-sc-param">
+                                <option value=""><?php esc_html_e('Use default', 'entries-display-for-wpforms'); ?></option>
+                                <?php
+                                // Populate form dropdown
+                                if (function_exists('wpforms')) {
+                                    $wpforms = wpforms();
+                                    if (is_object($wpforms) && method_exists($wpforms->form, 'get')) {
+                                        $all_forms = $wpforms->form->get();
+                                        if (!empty($all_forms)) {
+                                            foreach ($all_forms as $form) {
+                                                echo '<option value="' . esc_attr($form->ID) . '">' . esc_html($form->post_title) . '</option>';
+                                            }
+                                        }
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_fields"><?php esc_html_e('Fields (comma-separated IDs):', 'entries-display-for-wpforms'); ?></label>
+                            <input type="text" id="wpfed_sc_fields" class="wpfed-sc-param" placeholder="e.g., 1,3,5">
+                            <p class="description"><?php esc_html_e('Leave empty to use default fields', 'entries-display-for-wpforms'); ?></p>
+                        </div>
+                        
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_number"><?php esc_html_e('Number of entries:', 'entries-display-for-wpforms'); ?></label>
+                            <input type="number" id="wpfed_sc_number" class="wpfed-sc-param" min="1" placeholder="e.g., 10">
+                        </div>
+                        
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_show_date"><?php esc_html_e('Show Entry Date:', 'entries-display-for-wpforms'); ?></label>
+                            <select id="wpfed_sc_show_date" class="wpfed-sc-param">
+                                <option value=""><?php esc_html_e('Use default', 'entries-display-for-wpforms'); ?></option>
+                                <option value="yes"><?php esc_html_e('Yes', 'entries-display-for-wpforms'); ?></option>
+                                <option value="no"><?php esc_html_e('No', 'entries-display-for-wpforms'); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_date_format"><?php esc_html_e('Date Format:', 'entries-display-for-wpforms'); ?></label>
+                            <select id="wpfed_sc_date_format" class="wpfed-sc-param">
+                                <option value=""><?php esc_html_e('Use default', 'entries-display-for-wpforms'); ?></option>
+                                <option value="F j, Y g:i a"><?php echo esc_html(date_i18n('F j, Y g:i a')); ?></option>
+                                <option value="Y-m-d H:i:s"><?php echo esc_html(date_i18n('Y-m-d H:i:s')); ?></option>
+                                <option value="m/d/Y g:i a"><?php echo esc_html(date_i18n('m/d/Y g:i a')); ?></option>
+                                <option value="d/m/Y g:i a"><?php echo esc_html(date_i18n('d/m/Y g:i a')); ?></option>
+                                <option value="F j, Y"><?php echo esc_html(date_i18n('F j, Y')); ?></option>
+                            </select>
+                        </div>
+                        
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_show_username"><?php esc_html_e('Show Username:', 'entries-display-for-wpforms'); ?></label>
+                            <select id="wpfed_sc_show_username" class="wpfed-sc-param">
+                            <option value=""><?php esc_html_e('Use default', 'entries-display-for-wpforms'); ?></option>
+                                <option value="yes"><?php esc_html_e('Yes', 'entries-display-for-wpforms'); ?></option>
+                                <option value="no"><?php esc_html_e('No', 'entries-display-for-wpforms'); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_hide_field_labels"><?php esc_html_e('Hide Field Labels:', 'entries-display-for-wpforms'); ?></label>
+                            <select id="wpfed_sc_hide_field_labels" class="wpfed-sc-param">
+                                <option value=""><?php esc_html_e('Use default', 'entries-display-for-wpforms'); ?></option>
+                                <option value="yes"><?php esc_html_e('Yes', 'entries-display-for-wpforms'); ?></option>
+                                <option value="no"><?php esc_html_e('No', 'entries-display-for-wpforms'); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_hide_empty_fields"><?php esc_html_e('Hide Empty Fields:', 'entries-display-for-wpforms'); ?></label>
+                            <select id="wpfed_sc_hide_empty_fields" class="wpfed-sc-param">
+                                <option value=""><?php esc_html_e('Use default', 'entries-display-for-wpforms'); ?></option>
+                                <option value="yes"><?php esc_html_e('Yes', 'entries-display-for-wpforms'); ?></option>
+                                <option value="no"><?php esc_html_e('No', 'entries-display-for-wpforms'); ?></option>
+                            </select>
+                        </div>
+                        
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_user"><?php esc_html_e('User:', 'entries-display-for-wpforms'); ?></label>
+                            <select id="wpfed_sc_user" class="wpfed-sc-param">
+                                <option value=""><?php esc_html_e('All users', 'entries-display-for-wpforms'); ?></option>
+                                <option value="current"><?php esc_html_e('Current logged-in user', 'entries-display-for-wpforms'); ?></option>
+                                <?php
+                                // Populate user dropdown with all users
+                                $users = get_users(array('fields' => array('ID', 'display_name')));
+                                foreach ($users as $user) {
+                                    echo '<option value="' . esc_attr($user->ID) . '">' . esc_html($user->display_name) . ' (ID: ' . esc_html($user->ID) . ')</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_type"><?php esc_html_e('Entry type:', 'entries-display-for-wpforms'); ?></label>
+                            <select id="wpfed_sc_type" class="wpfed-sc-param">
+                                <option value="all"><?php esc_html_e('All entries', 'entries-display-for-wpforms'); ?></option>
+                                <option value="unread"><?php esc_html_e('Unread entries', 'entries-display-for-wpforms'); ?></option>
+                                <option value="read"><?php esc_html_e('Read entries', 'entries-display-for-wpforms'); ?></option>
+                                <option value="starred"><?php esc_html_e('Starred entries', 'entries-display-for-wpforms'); ?></option>
+                            </select>
+                        </div>
+                        
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_sort"><?php esc_html_e('Sort by field ID:', 'entries-display-for-wpforms'); ?></label>
+                            <input type="text" id="wpfed_sc_sort" class="wpfed-sc-param" placeholder="e.g., 2">
+                        </div>
+                        
+                        <div class="wpfed-shortcode-option">
+                            <label for="wpfed_sc_order"><?php esc_html_e('Sort order:', 'entries-display-for-wpforms'); ?></label>
+                            <select id="wpfed_sc_order" class="wpfed-sc-param">
+                                <option value="asc"><?php esc_html_e('Ascending (A-Z, 0-9)', 'entries-display-for-wpforms'); ?></option>
+                                <option value="desc"><?php esc_html_e('Descending (Z-A, 9-0)', 'entries-display-for-wpforms'); ?></option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="wpfed-shortcode-preview">
+                        <h3><?php esc_html_e('Your Shortcode', 'entries-display-for-wpforms'); ?></h3>
+                        <div class="wpfed-shortcode-result">
+                            <code id="wpfed_shortcode_result">[wpforms_entries_display]</code>
+                            <button type="button" id="wpfed_copy_shortcode" class="button">
+                                <span class="dashicons dashicons-clipboard"></span> <?php esc_html_e('Copy', 'entries-display-for-wpforms'); ?>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="wpfed-admin-sidebar">
-                    <div class="wpfed-shortcode-generator">
-                        <h2><?php esc_html_e('Shortcode Generator', 'entries-display-for-wpforms'); ?></h2>
-                        
-                        <div class="wpfed-shortcode-builder">
-                            <h3><?php esc_html_e('Customize Your Shortcode', 'entries-display-for-wpforms'); ?></h3>
-                            
-                            <div class="wpfed-shortcode-option">
-                                <label for="wpfed_sc_show_username"><?php esc_html_e('Show Username:', 'entries-display-for-wpforms'); ?></label>
-                                <select id="wpfed_sc_show_username" class="wpfed-sc-param">
-                                    <option value=""><?php esc_html_e('Use default', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="yes"><?php esc_html_e('Yes', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="no"><?php esc_html_e('No', 'entries-display-for-wpforms'); ?></option>
-                                </select>
-                            </div>
-
-                            <div class="wpfed-shortcode-option">
-                                <label for="wpfed_sc_hide_field_labels"><?php esc_html_e('Hide Field Labels:', 'entries-display-for-wpforms'); ?></label>
-                                <select id="wpfed_sc_hide_field_labels" class="wpfed-sc-param">
-                                    <option value=""><?php esc_html_e('Use default', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="yes"><?php esc_html_e('Yes', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="no"><?php esc_html_e('No', 'entries-display-for-wpforms'); ?></option>
-                                </select>
-                            </div>
-
-                            <div class="wpfed-shortcode-option">
-                                <label for="wpfed_sc_hide_empty_fields"><?php esc_html_e('Hide Empty Fields:', 'entries-display-for-wpforms'); ?></label>
-                                <select id="wpfed_sc_hide_empty_fields" class="wpfed-sc-param">
-                                    <option value=""><?php esc_html_e('Use default', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="yes"><?php esc_html_e('Yes', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="no"><?php esc_html_e('No', 'entries-display-for-wpforms'); ?></option>
-                                </select>
-                            </div>
-                            
-                            <div class="wpfed-shortcode-option">
-                                <label for="wpfed_sc_fields"><?php esc_html_e('Fields (comma-separated IDs):', 'entries-display-for-wpforms'); ?></label>
-                                <input type="text" id="wpfed_sc_fields" class="wpfed-sc-param" placeholder="e.g., 1,3,5">
-                                <p class="description"><?php esc_html_e('Leave empty to use default fields', 'entries-display-for-wpforms'); ?></p>
-                            </div>
-                            
-                            <div class="wpfed-shortcode-option">
-                                <label for="wpfed_sc_number"><?php esc_html_e('Number of entries:', 'entries-display-for-wpforms'); ?></label>
-                                <input type="number" id="wpfed_sc_number" class="wpfed-sc-param" min="1" placeholder="e.g., 10">
-                                <p class="description"><?php esc_html_e('Leave empty to use default', 'entries-display-for-wpforms'); ?></p>
-                            </div>
-                            
-                            <div class="wpfed-shortcode-option">
-                                <label for="wpfed_sc_user"><?php esc_html_e('User:', 'entries-display-for-wpforms'); ?></label>
-                                <select id="wpfed_sc_user" class="wpfed-sc-param">
-                                    <option value=""><?php esc_html_e('All users', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="current"><?php esc_html_e('Current logged-in user', 'entries-display-for-wpforms'); ?></option>
-                                    <?php
-                                    // Populate user dropdown with all users
-                                    $users = get_users(array('fields' => array('ID', 'display_name')));
-                                    foreach ($users as $user) {
-                                        echo '<option value="' . esc_attr($user->ID) . '">' . esc_html($user->display_name) . ' (ID: ' . esc_html($user->ID) . ')</option>';
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                            
-                            <div class="wpfed-shortcode-option">
-                                <label for="wpfed_sc_type"><?php esc_html_e('Entry type:', 'entries-display-for-wpforms'); ?></label>
-                                <select id="wpfed_sc_type" class="wpfed-sc-param">
-                                    <option value="all"><?php esc_html_e('All entries', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="unread"><?php esc_html_e('Unread entries', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="read"><?php esc_html_e('Read entries', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="starred"><?php esc_html_e('Starred entries', 'entries-display-for-wpforms'); ?></option>
-                                </select>
-                            </div>
-                            
-                            <div class="wpfed-shortcode-option">
-                                <label for="wpfed_sc_sort"><?php esc_html_e('Sort by field ID:', 'entries-display-for-wpforms'); ?></label>
-                                <input type="text" id="wpfed_sc_sort" class="wpfed-sc-param" placeholder="e.g., 2">
-                            </div>
-                            
-                            <div class="wpfed-shortcode-option">
-                                <label for="wpfed_sc_order"><?php esc_html_e('Sort order:', 'entries-display-for-wpforms'); ?></label>
-                                <select id="wpfed_sc_order" class="wpfed-sc-param">
-                                    <option value="asc"><?php esc_html_e('Ascending (A-Z, 0-9)', 'entries-display-for-wpforms'); ?></option>
-                                    <option value="desc"><?php esc_html_e('Descending (Z-A, 9-0)', 'entries-display-for-wpforms'); ?></option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="wpfed-shortcode-preview">
-                            <h3><?php esc_html_e('Your Shortcode', 'entries-display-for-wpforms'); ?></h3>
-                            <div class="wpfed-shortcode-result">
-                                <code id="wpfed_shortcode_result">[wpforms_entries_display]</code>
-                                <button type="button" id="wpfed_copy_shortcode" class="button button-secondary">
-                                    <span class="dashicons dashicons-clipboard"></span> <?php esc_html_e('Copy', 'entries-display-for-wpforms'); ?>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="wpfed-help-box">
-                        <h3><?php esc_html_e('Need Help?', 'entries-display-for-wpforms'); ?></h3>
-                        <p><?php esc_html_e('This plugin allows you to display WPForms entries as styled comments on your website.', 'entries-display-for-wpforms'); ?></p>
-                        <p><?php esc_html_e('To use it, simply configure the settings on this page and use the generated shortcode on any page or post.', 'entries-display-for-wpforms'); ?></p>
-                        <p><strong><?php esc_html_e('Note:', 'entries-display-for-wpforms'); ?></strong> <?php esc_html_e('This feature requires WPForms Pro with the Entries functionality.', 'entries-display-for-wpforms'); ?></p>
-                    </div>
-                    
-                    <div class="wpfed-shortcode-option">
-                        <label for="wpfed_sc_show_date"><?php esc_html_e('Show Entry Date:', 'entries-display-for-wpforms'); ?></label>
-                        <select id="wpfed_sc_show_date" class="wpfed-sc-param">
-                            <option value="yes"><?php esc_html_e('Yes', 'entries-display-for-wpforms'); ?></option>
-                            <option value="no"><?php esc_html_e('No', 'entries-display-for-wpforms'); ?></option>
-                        </select>
-                    </div>
-
-                    <div class="wpfed-shortcode-option">
-                        <label for="wpfed_sc_date_format"><?php esc_html_e('Date Format:', 'entries-display-for-wpforms'); ?></label>
-                        <select id="wpfed_sc_date_format" class="wpfed-sc-param">
-                        <option value="F j, Y g:i a"><?php echo esc_html(date_i18n('F j, Y g:i a')); ?></option>
-                        <option value="Y-m-d H:i:s"><?php echo esc_html(date_i18n('Y-m-d H:i:s')); ?></option>
-                        <option value="m/d/Y g:i a"><?php echo esc_html(date_i18n('m/d/Y g:i a')); ?></option>
-                        <option value="d/m/Y g:i a"><?php echo esc_html(date_i18n('d/m/Y g:i a')); ?></option>
-                        <option value="F j, Y"><?php echo esc_html(date_i18n('F j, Y')); ?></option>
-                        <option value="j F Y"><?php echo esc_html(date_i18n('j F Y')); ?></option>
-                        <option value="g:i a - F j, Y"><?php echo esc_html(date_i18n('g:i a - F j, Y')); ?></option>
-                        </select>
-                    </div>
+                <!-- Help Box -->
+                <div class="wpfed-help-box">
+                    <h3><?php esc_html_e('Need Help?', 'entries-display-for-wpforms'); ?></h3>
+                    <p><?php esc_html_e('This plugin allows you to display WPForms entries as styled comments on your website.', 'entries-display-for-wpforms'); ?></p>
+                    <p><?php esc_html_e('To use it, simply configure the settings on this page and use the generated shortcode on any page or post.', 'entries-display-for-wpforms'); ?></p>
+                    <p><strong><?php esc_html_e('Note:', 'entries-display-for-wpforms'); ?></strong> <?php esc_html_e('This feature requires WPForms Pro with the Entries functionality.', 'entries-display-for-wpforms'); ?></p>
                 </div>
             </div>
         </div>
-        <?php
-    }
+    </div>
+    <?php
+}
     
     /**
      * Enqueue admin scripts and styles for settings page

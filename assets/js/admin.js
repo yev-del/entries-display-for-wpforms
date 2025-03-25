@@ -1,13 +1,61 @@
 jQuery(document).ready(function($) {
-    // Initialize color pickers with a change event to update the shortcode preview
+    // Initialize accordion sections for better organization
+    $('.wpfed-settings-section h2').on('click', function() {
+        $(this).parent().toggleClass('closed');
+    });
+    
+    // Initialize color pickers with a change event to update both shortcode and live preview
     $('.wpfed-color-picker').wpColorPicker({
         change: function() {
             // Use a timeout to wait for the color change to apply before updating
             setTimeout(function() {
                 updateShortcodePreview();
+                updateLivePreview();
             }, 100);
         }
     });
+    
+    // Update live preview when style settings change
+    $('#wpfed_border_radius, #wpfed_padding, #wpfed_box_shadow, #wpfed_show_date, #wpfed_show_username, #wpfed_hide_field_labels').on('change', function() {
+        updateLivePreview();
+    });
+    
+    /**
+     * Update the live preview based on current settings
+     */
+    function updateLivePreview() {
+        var $preview = $('.wpfed-live-preview');
+        
+        // Get current style settings
+        var bgColor = $('#wpfed_background_color').val() || '#f9f9f9';
+        var borderColor = $('#wpfed_border_color').val() || '#e0e0e0';
+        var textColor = $('#wpfed_text_color').val() || '#333333';
+        var headerColor = $('#wpfed_header_color').val() || '#444444';
+        var borderRadius = $('#wpfed_border_radius').val() || '5px';
+        var padding = $('#wpfed_padding').val() || '15px';
+        var boxShadow = $('#wpfed_box_shadow').val() || '0 2px 5px rgba(0,0,0,0.1)';
+        
+        // Update CSS variables for the preview
+        $preview.css({
+            '--preview-bg-color': bgColor,
+            '--preview-border-color': borderColor,
+            '--preview-text-color': textColor,
+            '--preview-header-color': headerColor,
+            '--preview-border-radius': borderRadius,
+            '--preview-padding': padding,
+            '--preview-box-shadow': boxShadow
+        });
+        
+        // Update display settings
+        var showDate = $('#wpfed_show_date').val() === 'yes';
+        var showUsername = $('#wpfed_show_username').val() === 'yes';
+        var hideLabels = $('#wpfed_hide_field_labels').val() === 'yes';
+        
+        // Toggle visibility based on settings
+        $('.wpfed-preview-date').parent().toggle(showDate);
+        $('.wpfed-preview-user').parent().toggle(showUsername);
+        $('.wpfed-preview-label').toggle(!hideLabels);
+    }
     
     // Function to generate and update the shortcode preview
     function updateShortcodePreview() {
@@ -75,6 +123,18 @@ jQuery(document).ready(function($) {
             shortcode += ' order="' + order + '"';
         }
         
+        // Show date
+        var showDate = $('#wpfed_sc_show_date').val();
+        if (showDate) {
+            shortcode += ' show_date="' + showDate + '"';
+        }
+        
+        // Date format
+        var dateFormat = $('#wpfed_sc_date_format').val();
+        if (dateFormat) {
+            shortcode += ' date_format="' + dateFormat + '"';
+        }
+        
         shortcode += ']';
         
         // Update the displayed shortcode for user reference
@@ -84,34 +144,46 @@ jQuery(document).ready(function($) {
     // Automatically update the shortcode when any of the parameters change
     $('.wpfed-sc-param').on('change keyup', updateShortcodePreview);
     
-    // Initialize the shortcode preview on page load
+    // Initialize the shortcode preview and live preview on page load
     updateShortcodePreview();
+    updateLivePreview();
     
     // Copy the generated shortcode to clipboard
     $('#wpfed_copy_shortcode').on('click', function() {
         var shortcodeText = $('#wpfed_shortcode_result').text();
         
-        // Create a temporary textarea to handle the copy operation
-        var $temp = $('<textarea>');
-        $('body').append($temp);
-        $temp.val(shortcodeText).select();
+        // Use modern clipboard API if available
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(shortcodeText).then(function() {
+                showCopiedMessage();
+            });
+        } else {
+            // Fallback for older browsers
+            var $temp = $('<textarea>');
+            $('body').append($temp);
+            $temp.val(shortcodeText).select();
+            
+            // Execute the copy command
+            document.execCommand('copy');
+            
+            // Remove the temporary textarea after copying
+            $temp.remove();
+            
+            showCopiedMessage();
+        }
         
-        // Execute the copy command
-        document.execCommand('copy');
-        
-        // Remove the temporary textarea after copying
-        $temp.remove();
-        
-        // Show a success message to the user
-        var $button = $(this);
-        var originalText = $button.html();
-        
-        $button.html('<span class="dashicons dashicons-yes"></span> Copied!');
-        
-        // Revert the button text back to original after 2 seconds
-        setTimeout(function() {
-            $button.html(originalText);
-        }, 2000);
+        function showCopiedMessage() {
+            // Show a success message to the user
+            var $button = $('#wpfed_copy_shortcode');
+            var originalText = $button.html();
+            
+            $button.html('<span class="dashicons dashicons-yes"></span> Copied!');
+            
+            // Revert the button text back to original after 2 seconds
+            setTimeout(function() {
+                $button.html(originalText);
+            }, 2000);
+        }
     });
     
     // Update the fields available for sorting when a form is selected
@@ -190,10 +262,9 @@ jQuery(document).ready(function($) {
             
             // Set the selected option to the custom format
             $('#wpfed_date_format').val(customFormat);
+            
+            // Update the live preview
+            updateLivePreview();
         }
     });
-
-    // Handle changes to show date and date format, triggering shortcode updates
-    $('#wpfed_sc_show_date').on('change', updateShortcodePreview);
-    $('#wpfed_sc_date_format').on('change', updateShortcodePreview);
 });
