@@ -101,3 +101,13 @@ Fix WordPress.org plugin review issues and improve admin UI
 - Added proper display for custom date format input and button
 - Fixed responsive design issues in the admin settings page
 - Updated CSS with better organization and comments
+
+= 0.3 =
+
+* UI/UX Improvements:
+  * Added live preview section to visualize style settings in real-time
+  * Reorganized settings into collapsible sections for better organization
+  * Fixed color picker alignment and display issues
+  * Improved spacing and layout in style settings
+  * Enhanced responsive design for better mobile experience
+  * Optimized CSS code by removing duplicates and improving structure
