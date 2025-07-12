@@ -5,335 +5,460 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Register the shortcode during the 'init' action
+ * Class to handle the [wpforms_entries_display] shortcode.
  */
-function wpfed_register_shortcode() {
-    add_shortcode('wpforms_entries_display', 'wpfed_shortcode_callback');
-}
-add_action('init', 'wpfed_register_shortcode');
+class WPFED_Shortcode {
 
-/**
- * Shortcode callback function to display form entries
- *
- * @param array $atts Shortcode attributes
- * @return string HTML output for form entries display
- */
-function wpfed_shortcode_callback($atts) {
-    // Ensure WPForms is active
-    if (!function_exists('wpforms')) {
-        return '<p class="wpfed-error">' . esc_html__('Error: WPForms plugin is not active.', 'entries-display-for-wpforms') . '</p>';
+    private $options;
+
+    /**
+     * Constructor to initialize the shortcode.
+     */
+    public function __construct() {
+        $this->options = get_option('wpfed_options');
+        add_shortcode('wpforms_entries_display', array($this, 'shortcode_callback'));
     }
-    
-    // Check availability of WPForms Entries API
-    $wpforms = wpforms();
-    if (!is_object($wpforms) || !isset($wpforms->entry) || !method_exists($wpforms->entry, 'get_entries')) {
-        return '<p class="wpfed-error">' . esc_html__('Error: WPForms Entries API is not available. Make sure you have WPForms Pro installed.', 'entries-display-for-wpforms') . '</p>';
+
+    /**
+     * Shortcode callback function to display form entries.
+     *
+     * @param array $atts Shortcode attributes.
+     * @return string HTML output for form entries display.
+     */
+    public function shortcode_callback($atts) {
+        // Ensure WPForms is active and the necessary components are available.
+        if (!function_exists('wpforms') || !property_exists(wpforms(), 'entry') || !method_exists(wpforms()->entry, 'get_entries')) {
+            return $this->get_error_message(esc_html__('WPForms Pro and the Entries API are required.', 'entries-display-for-wpforms'));
+        }
+
+        // Merge user-supplied attributes with defaults.
+        $atts = $this->get_attributes($atts);
+
+        // Validate form ID.
+        if (empty($atts['id'])) {
+            return $this->get_error_message(esc_html__('Form ID is required.', 'entries-display-for-wpforms'));
+        }
+
+        // Retrieve and validate the form.
+        $form = wpforms()->form->get(absint($atts['id']));
+        if (empty($form)) {
+            return $this->get_error_message(esc_html__('Form not found.', 'entries-display-for-wpforms'));
+        }
+
+        // Decode form data and get fields.
+        $form_data = !empty($form->post_content) ? wpforms_decode($form->post_content) : array();
+        $form_fields = $this->get_display_fields($atts, $form_data);
+
+        if (empty($form_fields)) {
+            return $this->get_error_message(esc_html__('No fields are selected for display.', 'entries-display-for-wpforms'));
+        }
+
+        // Fetch entries from the database.
+        $entries = $this->get_entries($atts);
+
+        // Display a message if no entries are found.
+        if (empty($entries)) {
+            return '<div class="wpfed-no-entries">' . esc_html__('No entries found.', 'entries-display-for-wpforms') . '</div>';
+        }
+
+        // Enqueue styles and generate custom CSS.
+        $this->enqueue_styles();
+
+        // Return the rendered HTML for the entries.
+        return $this->render_entries($entries, $form_fields, $atts, $form_data);
     }
-    
-    // Retrieve plugin options
-    $options = get_option('wpfed_options');
-    
-    // Define default attributes for the shortcode
-    $default_atts = array(
-        'id'               => isset($options['form_id']) ? $options['form_id'] : '',
-        'fields'           => '',
-        'number'           => isset($options['entries_per_page']) ? $options['entries_per_page'] : 30,
-        'user'             => '',
-        'type'             => 'all', // Options: all, unread, read, or starred
-        'sort'             => '',
-        'order'            => 'asc',
-        'show_date'        => isset($options['show_date']) ? $options['show_date'] : 'yes',
-        'date_format'      => isset($options['date_format']) ? $options['date_format'] : 'F j, Y g:i a',
-        'show_username'    => isset($options['show_username']) ? $options['show_username'] : 'no',
-        'hide_field_labels' => isset($options['hide_field_labels']) ? $options['hide_field_labels'] : 'no',
-        'hide_empty_fields' => isset($options['hide_empty_fields']) ? $options['hide_empty_fields'] : 'no',
-    );
-    
-    // Merge user-supplied attributes with defaults
-    $atts = shortcode_atts($default_atts, $atts);
-    
-    // Validate form ID
-    if (empty($atts['id'])) {
-        return '<p class="wpfed-error">' . esc_html__('Error: Form ID is required. Please specify a form ID in the shortcode or in the plugin settings.', 'entries-display-for-wpforms') . '</p>';
+
+    /**
+     * Merges shortcode attributes with default values.
+     *
+     * @param array $atts User-provided attributes.
+     * @return array Merged attributes.
+     */
+    private function get_attributes($atts) {
+        $default_atts = array(
+            'id'                => $this->options['form_id'] ?? '',
+            'fields'            => '',
+            'number'            => $this->options['entries_per_page'] ?? 30,
+            'user'              => '',
+            'type'              => 'all',
+            'sort'              => '',
+            'order'             => 'desc',
+            'show_date'         => $this->options['show_date'] ?? 'yes',
+            'date_format'       => $this->options['date_format'] ?? 'F j, Y g:i a',
+            'show_username'     => $this->options['show_username'] ?? 'no',
+            'hide_field_labels' => $this->options['hide_field_labels'] ?? 'no',
+            'hide_empty_fields' => $this->options['hide_empty_fields'] ?? 'no',
+        );
+        return shortcode_atts($default_atts, $atts, 'wpforms_entries_display');
     }
-    
-    // Attempt to retrieve the form
-    $form = $wpforms->form->get(absint($atts['id']));
-    
-    // Verify form existence
-    if (empty($form)) {
-        return '<p class="wpfed-error">' . esc_html__('Error: Form not found. Please check the form ID.', 'entries-display-for-wpforms') . '</p>';
-    }
-    
-    // Extract form data
-    $form_data = !empty($form->post_content) ? wpforms_decode($form->post_content) : '';
-    if (empty($form_data) || empty($form_data['fields'])) {
-        return '<p class="wpfed-error">' . esc_html__('Error: Form has no fields.', 'entries-display-for-wpforms') . '</p>';
-    }
-    
-    // Determine fields to display
-    $form_field_ids = array();
-    
-    // Use fields from shortcode attributes or plugin options
-    if (!empty($atts['fields'])) {
-        $form_field_ids = explode(',', str_replace(' ', '', $atts['fields']));
-    } else if (!empty($options['display_fields'])) {
-        $form_field_ids = $options['display_fields'];
-    }
-    
-    // Configure form fields for display
-    if (empty($form_field_ids)) {
-        $form_fields = $form_data['fields'];
-    } else {
+
+    /**
+     * Determines which form fields to display based on attributes and settings.
+     *
+     * @param array $atts Shortcode attributes.
+     * @param array $form_data Decoded form data.
+     * @return array The fields to display.
+     */
+    private function get_display_fields($atts, $form_data) {
+        if (empty($form_data['fields'])) {
+            return array();
+        }
+
+        $all_fields = $form_data['fields'];
+        $field_ids_to_display = array();
+
+        if (!empty($atts['fields'])) {
+            $field_ids_to_display = array_map('trim', explode(',', $atts['fields']));
+        } elseif (!empty($this->options['display_fields'])) {
+            $field_ids_to_display = $this->options['display_fields'];
+        }
+
         $form_fields = array();
-        foreach ($form_field_ids as $field_id) {
-            if (isset($form_data['fields'][$field_id])) {
-                $form_fields[$field_id] = $form_data['fields'][$field_id];
-            }
-        }
-    }
-    
-    // Ensure fields are available for display
-    if (empty($form_fields)) {
-        return '<p class="wpfed-error">' . esc_html__('Error: No fields selected for display.', 'entries-display-for-wpforms') . '</p>';
-    }
-    
-    // Specify field types to exclude
-    $form_fields_disallow = apply_filters('wpfed_disallowed_field_types', array('divider', 'html', 'pagebreak', 'captcha'));
-    
-    // Filter out disallowed field types
-    foreach ($form_fields as $field_id => $form_field) {
-        if (in_array($form_field['type'], $form_fields_disallow, true)) {
-            unset($form_fields[$field_id]);
-        }
-    }
-    
-    // Set up arguments to retrieve entries
-    $entries_args = array(
-        'form_id' => absint($atts['id']),
-    );
-    
-    // Apply user-specific filters if applicable
-    if (!empty($atts['user'])) {
-        if ($atts['user'] === 'current' && is_user_logged_in()) {
-            $entries_args['user_id'] = get_current_user_id();
+        if (empty($field_ids_to_display)) {
+            $form_fields = $all_fields;
         } else {
-            $entries_args['user_id'] = absint($atts['user']);
-        }
-    }
-    
-    // Define number of entries to retrieve
-    if (!empty($atts['number'])) {
-        $entries_args['number'] = absint($atts['number']);
-    }
-    
-    // Apply filters to the entry type
-    if ($atts['type'] === 'unread') {
-        $entries_args['viewed'] = '0';
-    } elseif ($atts['type'] === 'read') {
-        $entries_args['viewed'] = '1';
-    } elseif ($atts['type'] === 'starred') {
-        $entries_args['starred'] = '1';
-    }
-    
-    // Securely retrieve entries
-    try {
-        $entries = $wpforms->entry->get_entries($entries_args);
-        $entries = json_decode(json_encode($entries), true);
-    } catch (Exception $e) {
-        return '<p class="wpfed-error">' . esc_html__('Error retrieving entries: ', 'entries-display-for-wpforms') . esc_html($e->getMessage()) . '</p>';
-    }
-    
-    // Display message if no entries are found
-    if (empty($entries)) {
-        return '<p class="wpfed-no-entries">' . esc_html__('No entries found.', 'entries-display-for-wpforms') . '</p>';
-    }
-    
-    // Process entries for display
-    foreach ($entries as $key => $entry) {
-        $entries[$key]['fields'] = json_decode($entry['fields'], true);
-        $entries[$key]['meta'] = json_decode($entry['meta'], true);
-    }
-    
-    // Sort entries if a sort parameter is provided
-    if (!empty($atts['sort']) && isset($entries[0]['fields'][$atts['sort']])) {
-        usort($entries, function ($entry1, $entry2) use ($atts) {
-            return strtolower($atts['order']) == 'asc' ? strcmp($entry1['fields'][$atts['sort']]['value'], $entry2['fields'][$atts['sort']]['value']) : strcmp($entry2['fields'][$atts['sort']]['value'], $entry1['fields'][$atts['sort']]['value']);
-        });
-    }
-    
-    // Enqueue styles for frontend display
-    wp_enqueue_style('wpfed-frontend-styles');
-    
-    // Generate custom CSS based on saved style settings
-    $styles = isset($options['styles']) ? $options['styles'] : array();
-    $custom_css = wpfed_generate_custom_css($styles);
-    wp_add_inline_style('wpfed-frontend-styles', $custom_css);
-    
-    // Start output buffering to capture HTML output
-    ob_start();
-    
-    echo '<div class="wpfed-comments-container">';
-    
-    // Output each entry as a comment block
-    foreach ($entries as $entry) {
-        echo '<div class="wpfed-comment">';
-        
-        // Display date/time if enabled, along with username if applicable
-        if ($atts['show_date'] === 'yes' && !empty($entry['date'])) {
-            $date = date_i18n($atts['date_format'], strtotime($entry['date']));
-            echo '<div class="wpfed-comment-date">';
-            
-            if (isset($options['show_username']) && $options['show_username'] === 'yes' && !empty($entry['user_id'])) {
-                $user = get_userdata($entry['user_id']);
-                if ($user) {
-                    echo '<span class="wpfed-username">' . esc_html($user->display_name) . '</span> • ';
+            foreach ($field_ids_to_display as $field_id) {
+                if (isset($all_fields[$field_id])) {
+                    $form_fields[$field_id] = $all_fields[$field_id];
                 }
             }
-            
-            echo esc_html($date) . '</div>';
-        } else if (isset($options['show_username']) && $options['show_username'] === 'yes' && !empty($entry['user_id'])) {
-            // Display only username if date is disabled
-            $user = get_userdata($entry['user_id']);
+        }
+
+        // Filter out disallowed field types.
+        $disallowed_types = apply_filters('wpfed_disallowed_field_types', array('divider', 'html', 'pagebreak', 'captcha'));
+        foreach ($form_fields as $field_id => $field) {
+            if (in_array($field['type'], $disallowed_types, true)) {
+                unset($form_fields[$field_id]);
+            }
+        }
+
+        return $form_fields;
+    }
+
+    /**
+     * Fetches entries from the database based on shortcode attributes.
+     *
+     * @param array $atts Shortcode attributes.
+     * @return array The fetched entries.
+     */
+    private function get_entries($atts) {
+        $args = array(
+            'form_id' => absint($atts['id']),
+            'number'  => absint($atts['number']),
+            'orderby' => 'entry_id', // Default sorting
+            'order'   => strtoupper($atts['order']),
+        );
+
+        // User filtering.
+        if (!empty($atts['user'])) {
+            if ($atts['user'] === 'current' && is_user_logged_in()) {
+                $args['user_id'] = get_current_user_id();
+            } else {
+                $args['user_id'] = absint($atts['user']);
+            }
+        }
+
+        // Entry type filtering.
+        $type_map = array(
+            'unread'  => array('viewed', '0'),
+            'read'    => array('viewed', '1'),
+            'starred' => array('starred', '1'),
+        );
+        if (isset($type_map[$atts['type']])) {
+            list($key, $value) = $type_map[$atts['type']];
+            $args[$key] = $value;
+        }
+
+        // Custom field sorting.
+        if (!empty($atts['sort'])) {
+            $args['orderby'] = 'field_' . absint($atts['sort']);
+        }
+
+        try {
+            return wpforms()->entry->get_entries($args);
+        } catch (Exception $e) {
+            // In a real-world scenario, you might want to log this error.
+            return array();
+        }
+    }
+
+    /**
+     * Renders the HTML for the entries.
+     *
+     * @param array $entries The entries to render.
+     * @param array $form_fields The form fields to display.
+     * @param array $atts Shortcode attributes.
+     * @param array $form_data Decoded form data.
+     * @return string The rendered HTML.
+     */
+    private function render_entries($entries, $form_fields, $atts, $form_data) {
+        ob_start();
+        ?>
+        <div class="wpfed-comments-container">
+            <?php foreach ($entries as $entry) :
+                $entry_fields = !empty($entry->fields) ? wpforms_decode($entry->fields) : array();
+            ?>
+                <div class="wpfed-comment">
+                    <?php $this->render_entry_header($entry, $atts); ?>
+                    <div class="wpfed-comment-content">
+                        <?php foreach ($form_fields as $form_field) :
+                            $field_value = $entry_fields[$form_field['id']]['value'] ?? '';
+
+                            if (empty($field_value) && $atts['hide_empty_fields'] === 'yes') {
+                                continue;
+                            }
+
+                            // Skip username field if it's already shown in header and it's a name field
+                            if ($atts['show_username'] === 'yes' && 
+                                (stripos($form_field['label'], 'name') !== false || 
+                                 stripos($form_field['label'], 'user') !== false) &&
+                                !empty($entry->user_id)) {
+                                continue;
+                            }
+
+                            $field_value_processed = apply_filters('wpforms_html_field_value', wp_strip_all_tags($field_value), $entry_fields[$form_field['id']], $form_data, 'entry-frontend-table');
+                            
+                            // Determine field type for styling
+                            $field_type_class = $this->get_field_type_class($form_field);
+                            ?>
+                            <div class="wpfed-comment-field <?php echo esc_attr($field_type_class); ?>">
+                                <?php if ($atts['hide_field_labels'] !== 'yes') : ?>
+                                    <span class="wpfed-field-label"><?php echo esc_html($form_field['label']); ?>:</span>
+                                <?php endif; ?>
+                                <span class="wpfed-field-value"><?php echo wp_kses_post($field_value_processed); ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Renders the header for a single entry.
+     *
+     * @param object $entry The entry object.
+     * @param array $atts Shortcode attributes.
+     */
+    private function render_entry_header($entry, $atts) {
+        $show_date = $atts['show_date'] === 'yes';
+        $show_username = $atts['show_username'] === 'yes' && !empty($entry->user_id);
+
+        if (!$show_date && !$show_username) {
+            return;
+        }
+
+        echo '<div class="wpfed-comment-header">';
+        
+        // Show date if enabled
+        if ($show_date && !empty($entry->date)) {
+            $date_info = date_i18n($atts['date_format'], strtotime($entry->date));
+            echo '<div class="wpfed-comment-date">' . esc_html($date_info) . '</div>';
+        }
+        
+        // Show WordPress username as separate field if enabled (not form field data)
+        if ($show_username) {
+            $user = get_userdata($entry->user_id);
             if ($user) {
-                echo '<div class="wpfed-comment-date"><span class="wpfed-username">' . esc_html($user->display_name) . '</span></div>';
+                echo '<div class="wpfed-username">' . esc_html($user->display_name) . '</div>';
             }
         }
         
-        echo '<div class="wpfed-comment-content">';
-        
-        $entry_fields = $entry['fields'];
-        
-        // Loop through and display fields
-        foreach ($form_fields as $form_field) {
-            $field_value = '';
-            foreach ($entry_fields as $entry_field) {
-                if (absint($entry_field['id']) === absint($form_field['id'])) {
-                    $field_value = apply_filters('wpforms_html_field_value', wp_strip_all_tags($entry_field['value']), $entry_field, $form_data, 'entry-frontend-table');
-                    break;
-                }
-            }
-            
-            // Skip empty values if configured to hide them
-            if (empty($field_value) && isset($options['hide_empty_fields']) && $options['hide_empty_fields'] === 'yes') {
-                continue;
-            }
-            
-            echo '<div class="wpfed-comment-field">';
-            
-            // Conditionally display field labels
-            if (!isset($options['hide_field_labels']) || $options['hide_field_labels'] !== 'yes') {
-                echo '<span class="wpfed-field-label">' . esc_html($form_field['label']) . ':</span> ';
-            }
-            
-            echo '<span class="wpfed-field-value">' . wp_kses_post($field_value) . '</span>';
-            echo '</div>';
-        }
-        
-        echo '</div>'; // .wpfed-comment-content
-        echo '</div>'; // .wpfed-comment
+        echo '</div>';
     }
-    
-    echo '</div>'; // .wpfed-comments-container
-    
-    // Capture buffered output
-    $output = ob_get_clean();
-    
-    return $output;
+
+    /**
+     * Enqueues frontend styles and generates custom CSS.
+     */
+    private function enqueue_styles() {
+        wp_enqueue_style('wpfed-frontend-styles');
+        $custom_css = $this->generate_custom_css();
+        wp_add_inline_style('wpfed-frontend-styles', $custom_css);
+    }
+
+    /**
+     * Generates custom CSS based on style settings.
+     *
+     * @return string CSS rules to apply.
+     */
+    private function generate_custom_css() {
+        $styles = $this->options['styles'] ?? array();
+        $css_vars = array(
+            '--wpfed-bg-color'       => $styles['background_color'] ?? '#f9f9f9',
+            '--wpfed-border-color'   => $styles['border_color'] ?? '#e0e0e0',
+            '--wpfed-text-color'     => $styles['text_color'] ?? '#333333',
+            '--wpfed-header-color'   => $styles['header_color'] ?? '#444444',
+            '--wpfed-border-radius'  => $styles['border_radius'] ?? '5px',
+            '--wpfed-padding'        => $styles['padding'] ?? '15px',
+            '--wpfed-box-shadow'     => ($styles['box_shadow'] ?? 'none') === 'none' ? 'none' : ($styles['box_shadow'] ?? '0 2px 5px rgba(0,0,0,0.1)'),
+            '--wpfed-vertical-align' => $styles['vertical_alignment'] ?? 'top',
+            // Updated typography variables for all field types
+            '--wpfed-date-font-size'     => $styles['date_font_size'] ?? '14px',
+            '--wpfed-date-font-weight'   => $styles['date_font_weight'] ?? 'bold',
+            '--wpfed-date-font-style'    => $styles['date_font_style'] ?? 'normal',
+            '--wpfed-username-font-size' => $styles['username_font_size'] ?? '14px',
+            '--wpfed-username-font-weight' => $styles['username_font_weight'] ?? 'bold',
+            '--wpfed-username-font-style' => $styles['username_font_style'] ?? 'normal',
+            '--wpfed-email-font-size'    => $styles['email_font_size'] ?? '14px',
+            '--wpfed-email-font-weight'  => $styles['email_font_weight'] ?? 'normal',
+            '--wpfed-email-font-style'   => $styles['email_font_style'] ?? 'normal',
+            '--wpfed-field-labels-font-size' => $styles['field_labels_font_size'] ?? '14px',
+            '--wpfed-field-labels-font-weight' => $styles['field_labels_font_weight'] ?? 'bold',
+            '--wpfed-field-labels-font-style' => $styles['field_labels_font_style'] ?? 'normal',
+            '--wpfed-comment-font-size'  => $styles['comment_font_size'] ?? '16px',
+            '--wpfed-comment-font-weight' => $styles['comment_font_weight'] ?? 'normal',
+            '--wpfed-comment-font-style' => $styles['comment_font_style'] ?? 'normal',
+        );
+
+        $css = ':root {';
+        foreach ($css_vars as $var => $value) {
+            $css .= esc_attr($var) . ': ' . esc_attr($value) . ';';
+        }
+        $css .= '}';
+
+        // Add enhanced CSS with !important declarations to override external theme editors
+        $css .= '
+        /* Vertical alignment for entry content - DISABLED
+        .wpfed-comment-content {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        
+        .wpfed-comment-content {
+            justify-content: ' . ($styles['vertical_alignment'] === 'middle' ? 'center' : ($styles['vertical_alignment'] === 'bottom' ? 'flex-end' : 'flex-start')) . ' !important;
+        }
+        */
+        
+        /* Date Typography */
+        .wpfed-comment-date {
+            font-size: var(--wpfed-date-font-size) !important;
+            font-weight: var(--wpfed-date-font-weight) !important;
+            font-style: var(--wpfed-date-font-style) !important;
+        }
+        
+        /* Username Typography */
+        .wpfed-username {
+            font-size: var(--wpfed-username-font-size) !important;
+            font-weight: var(--wpfed-username-font-weight) !important;
+            font-style: var(--wpfed-username-font-style) !important;
+        }
+        
+        /* Field Labels Typography */
+        .wpfed-field-label {
+            font-size: var(--wpfed-field-labels-font-size) !important;
+            font-weight: var(--wpfed-field-labels-font-weight) !important;
+            font-style: var(--wpfed-field-labels-font-style) !important;
+        }
+        
+        /* Email Field Typography */
+        .wpfed-field-email .wpfed-field-value {
+            font-size: var(--wpfed-email-font-size) !important;
+            font-weight: var(--wpfed-email-font-weight) !important;
+            font-style: var(--wpfed-email-font-style) !important;
+        }
+        
+        /* Comment Field Typography */
+        .wpfed-field-comment .wpfed-field-value {
+            font-size: var(--wpfed-comment-font-size) !important;
+            font-weight: var(--wpfed-comment-font-weight) !important;
+            font-style: var(--wpfed-comment-font-style) !important;
+        }
+        
+        /* General Field Typography (fallback for other fields) */
+        .wpfed-field-general .wpfed-field-value {
+            font-size: var(--wpfed-comment-font-size) !important;
+            font-weight: var(--wpfed-comment-font-weight) !important;
+            font-style: var(--wpfed-comment-font-style) !important;
+        }
+        
+        /* Ensure typography overrides work with common page builders */
+        .elementor .wpfed-comment-date,
+        .elementor-widget .wpfed-comment-date,
+        .et_pb_module .wpfed-comment-date,
+        .vc_row .wpfed-comment-date {
+            font-size: var(--wpfed-date-font-size) !important;
+            font-weight: var(--wpfed-date-font-weight) !important;
+            font-style: var(--wpfed-date-font-style) !important;
+        }
+        
+        .elementor .wpfed-username,
+        .elementor-widget .wpfed-username,
+        .et_pb_module .wpfed-username,
+        .vc_row .wpfed-username {
+            font-size: var(--wpfed-username-font-size) !important;
+            font-weight: var(--wpfed-username-font-weight) !important;
+            font-style: var(--wpfed-username-font-style) !important;
+        }
+        
+        .elementor .wpfed-field-label,
+        .elementor-widget .wpfed-field-label,
+        .et_pb_module .wpfed-field-label,
+        .vc_row .wpfed-field-label {
+            font-size: var(--wpfed-field-labels-font-size) !important;
+            font-weight: var(--wpfed-field-labels-font-weight) !important;
+            font-style: var(--wpfed-field-labels-font-style) !important;
+        }
+        
+        .elementor .wpfed-field-email .wpfed-field-value,
+        .elementor-widget .wpfed-field-email .wpfed-field-value,
+        .et_pb_module .wpfed-field-email .wpfed-field-value,
+        .vc_row .wpfed-field-email .wpfed-field-value {
+            font-size: var(--wpfed-email-font-size) !important;
+            font-weight: var(--wpfed-email-font-weight) !important;
+            font-style: var(--wpfed-email-font-style) !important;
+        }
+        
+        .elementor .wpfed-field-comment .wpfed-field-value,
+        .elementor-widget .wpfed-field-comment .wpfed-field-value,
+        .et_pb_module .wpfed-field-comment .wpfed-field-value,
+        .vc_row .wpfed-field-comment .wpfed-field-value {
+            font-size: var(--wpfed-comment-font-size) !important;
+            font-weight: var(--wpfed-comment-font-weight) !important;
+            font-style: var(--wpfed-comment-font-style) !important;
+        }
+        ';
+
+        return $css;
+    }
+
+    /**
+     * Generates an HTML-formatted error message.
+     *
+     * @param string $message The error message text.
+     * @return string The formatted error message.
+     */
+    private function get_error_message($message) {
+        return '<div class="wpfed-error">' . $message . '</div>';
+    }
+
+    /**
+     * Determine field type class for styling
+     *
+     * @param array $form_field The form field data
+     * @return string CSS class for field type
+     */
+    private function get_field_type_class($form_field) {
+        $field_type = $form_field['type'] ?? '';
+        $field_label = strtolower($form_field['label'] ?? '');
+        
+        // Check for email fields
+        if ($field_type === 'email' || stripos($field_label, 'email') !== false) {
+            return 'wpfed-field-email';
+        }
+        
+        // Check for comment/message fields
+        if ($field_type === 'textarea' || 
+            stripos($field_label, 'comment') !== false || 
+            stripos($field_label, 'message') !== false ||
+            stripos($field_label, 'description') !== false) {
+            return 'wpfed-field-comment';
+        }
+        
+        return 'wpfed-field-general';
+    }
 }
 
-/**
- * Generate custom CSS based on style settings
- *
- * @param array $styles Style settings
- * @return string CSS rules to apply
- */
-function wpfed_generate_custom_css($styles) {
-    $css = '';
-    
-    // Apply default styles if specific settings are not provided
-    $background_color = isset($styles['background_color']) ? $styles['background_color'] : '#f9f9f9';
-    $border_color = isset($styles['border_color']) ? $styles['border_color'] : '#e0e0e0';
-    $text_color = isset($styles['text_color']) ? $styles['text_color'] : '#333333';
-    $header_color = isset($styles['header_color']) ? $styles['header_color'] : '#444444';
-    $border_radius = isset($styles['border_radius']) ? $styles['border_radius'] : '5px';
-    $padding = isset($styles['padding']) ? $styles['padding'] : '15px';
-    $box_shadow = isset($styles['box_shadow']) ? $styles['box_shadow'] : '0 2px 5px rgba(0,0,0,0.1)';
-    
-    // Configure CSS rules for the comments container
-    $css .= '.wpfed-comments-container {';
-    $css .= 'margin-bottom: 20px;';
-    $css .= '}';
-    
-    // Configure CSS for each individual comment
-    $css .= '.wpfed-comment {';
-    $css .= 'background-color: ' . $background_color . ';';
-    $css .= 'color: ' . $text_color . ';';
-    $css .= 'border: 1px solid ' . $border_color . ';';
-    $css .= 'border-radius: ' . $border_radius . ';';
-    $css .= 'padding: ' . $padding . ';';
-    $css .= 'margin-bottom: 20px;';
-    
-    // Include box shadow only if specified and not set to 'none'
-    if ($box_shadow !== 'none') {
-        $css .= 'box-shadow: ' . $box_shadow . ';';
-    }
-    
-    $css .= '}';
-    
-    // Customize comment date display
-    $css .= '.wpfed-comment-date {';
-    $css .= 'font-size: 0.9em;';
-    $css .= 'color: ' . $header_color . ';';
-    $css .= 'margin-bottom: 10px;';
-    $css .= 'font-weight: bold;';
-    $css .= '}';
-    
-    // Define styles for the username
-    $css .= '.wpfed-username {';
-    $css .= 'font-weight: bold;';
-    $css .= 'color: ' . $header_color . ';';
-    $css .= '}';
-    
-    // Configure styles for comment fields
-    $css .= '.wpfed-comment-field {';
-    $css .= 'margin-bottom: 8px;';
-    $css .= '}';
-    
-    // Define font styles for field labels
-    $css .= '.wpfed-field-label {';
-    $css .= 'font-weight: bold;';
-    $css .= 'color: ' . $header_color . ';';
-    $css .= '}';
-    
-    // Define styles for field values
-    $css .= '.wpfed-field-value {';
-    $css .= 'word-break: break-word;';
-    $css .= '}';
-    
-    // Remove margin for last field element
-    $css .= '.wpfed-comment-field:last-child {';
-    $css .= 'margin-bottom: 0;';
-    $css .= '}';
-    
-    // Configure styles for error messages
-    $css .= '.wpfed-error {';
-    $css .= 'color: #d63638;';
-    $css .= 'padding: 10px;';
-    $css .= 'border: 1px solid #ffb8b8;';
-    $css .= 'background-color: #ffecec;';
-    $css .= 'border-radius: 4px;';
-    $css .= 'margin-bottom: 20px;';
-    $css .= '}';
-    
-    // Define styles for 'no entries' message
-    $css .= '.wpfed-no-entries {';
-    $css .= 'padding: 15px;';
-    $css .= 'text-align: center;';
-    $css .= 'background-color: ' . $background_color . ';';
-    $css .= 'border: 1px solid ' . $border_color . ';';
-    $css .= 'border-radius: ' . $border_radius . ';';
-    $css .= '}';
-    
-    return $css;
-}
+// Initialize the shortcode handler class.
+new WPFED_Shortcode();

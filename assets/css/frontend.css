@@ -1,12 +1,9 @@
-/* Base styles for WPForms Entries Display */
-.wpfed-wrapper {
-    width: 100%;
-    max-width: 100%;
-    margin-bottom: 20px;
-    box-sizing: border-box;
-}
+/*
+ * Frontend Styles for Entries Display for WPForms
+ * This file uses CSS variables that are dynamically generated in WPFED_Shortcode::generate_custom_css()
+ */
 
-/* Base styles for WPForms Entries Display */
+/* Base container for the entries display */
 .wpfed-comments-container {
     width: 100%;
     max-width: 100%;
@@ -14,8 +11,15 @@
     box-sizing: border-box;
 }
 
+/* Individual entry item */
 .wpfed-comment {
+    background-color: var(--wpfed-bg-color);
+    color: var(--wpfed-text-color);
+    border: 1px solid var(--wpfed-border-color);
+    border-radius: var(--wpfed-border-radius);
+    padding: var(--wpfed-padding);
     margin-bottom: 20px;
+    box-shadow: var(--wpfed-box-shadow);
     overflow: hidden;
 }
 
@@ -23,15 +27,38 @@
     margin-bottom: 0;
 }
 
-.wpfed-comment-date {
-    font-size: 0.9em;
+/* Header section wrapper */
+.wpfed-comment-header {
     margin-bottom: 10px;
 }
 
-.wpfed-comment-content {
-    overflow: hidden;
+/* Header section of an entry, containing date */
+.wpfed-comment-date {
+    font-size: var(--wpfed-date-font-size, 0.9em);
+    font-weight: var(--wpfed-date-font-weight, bold);
+    font-style: var(--wpfed-date-font-style, normal);
+    color: var(--wpfed-header-color);
+    margin-bottom: 5px;
 }
 
+/* Username display as separate field */
+.wpfed-username {
+    font-size: var(--wpfed-username-font-size, 0.9em);
+    font-weight: var(--wpfed-username-font-weight, bold);
+    font-style: var(--wpfed-username-font-style, normal);
+    color: var(--wpfed-header-color);
+    margin-bottom: 5px;
+}
+
+/* Main content area of an entry with vertical alignment */
+.wpfed-comment-content {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 50px; /* Minimum height for alignment to be visible */
+}
+
+/* Individual field-value pair */
 .wpfed-comment-field {
     margin-bottom: 8px;
 }
@@ -40,19 +67,28 @@
     margin-bottom: 0;
 }
 
+/* Field label (e.g., "Name:") */
 .wpfed-field-label {
-    font-weight: bold;
+    font-size: var(--wpfed-content-font-size, 1em);
+    font-weight: var(--wpfed-content-font-weight, bold);
+    font-style: var(--wpfed-content-font-style, normal);
+    color: var(--wpfed-header-color);
 }
 
+/* Field value */
 .wpfed-field-value {
+    font-size: var(--wpfed-content-font-size, 1em);
+    font-weight: var(--wpfed-content-font-weight, normal);
+    font-style: var(--wpfed-content-font-style, normal);
     word-break: break-word;
 }
 
+/* Error messages and "no entries" notice */
 .wpfed-error,
 .wpfed-no-entries {
     padding: 15px;
     margin-bottom: 20px;
-    border-radius: 4px;
+    border-radius: var(--wpfed-border-radius);
 }
 
 .wpfed-error {
@@ -61,4 +97,8 @@
     border: 1px solid #ffb8b8;
 }
 
-/* Additional styles will be added inline via PHP */
+.wpfed-no-entries {
+    background-color: var(--wpfed-bg-color);
+    border: 1px solid var(--wpfed-border-color);
+    text-align: center;
+}
